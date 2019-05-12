@@ -2,7 +2,11 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app_express = express();
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const server = app_express.listen(3000);
+const io = require('socket.io').listen(server);
+const osc = require('node-osc');
 
+var oscServer = new osc.Server(12345, '127.0.0.1');
 /*
 Express
 */
@@ -14,10 +18,6 @@ app_express.use(express.static(__dirname + '/public'));
 
 app_express.get('/', (req, res) => {
   res.sendFile(path.join(__dirname + '/public/index.html'));
-});
-
-app_express.listen(3000, () => {
-  console.log('Example app listening on port 3000!')
 });
 
 var date = new Date();
@@ -33,6 +33,8 @@ const csvWriter = createCsvWriter({
     ]
 });
 const records = [];
+var counterSpect1 = 0;
+var counterSpect2 = 0;
 
 function getTimeValue() {
   var date = new Date();
@@ -72,4 +74,27 @@ app_express.post('/clicked', (req,res) => {
 
 	console.log(req.body.interval);
 });
+
+
+oscServer.on("message", function (data) {
+
+  var numPacketsSpect = 5;       // we send the fft once for every n packets we get, can tune according to the resolution and time length you want to see
+
+  if (data[0] == 'fft'){
+    if (data[1] == 1) {     // channel 1
+    counterSpect1 += 1;
+      if (counterSpect1 % numPacketsSpect == 0) {
+        io.sockets.emit('fft-test', {'data': data.slice(1)});
+        //console.log(counterSpect1);
+      }
+    }
+    if (data[1] == 8) {     // channel 2
+      counterSpect2 += 1;
+      if (counterSpect2 % numPacketsSpect == 0) {
+        io.sockets.emit('fft-test2', {'data': data.slice(1)});
+      }
+    }
+  }
+});
+
  
