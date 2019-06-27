@@ -32,7 +32,7 @@ const csvWriter = createCsvWriter({
         {id: 'state', title: 'STATE'}
     ]
 });
-const records = [];
+var records = [];
 var counterSpect1 = 0;
 var counterSpect2 = 0;
 
@@ -44,6 +44,7 @@ function getTimeValue() {
 function writeCSV() { 
 	csvWriter.writeRecords(records)       // returns a promise
 	    .then(() => {
+          records = [];
 	        console.log('...Done');
 	    });
 }
@@ -56,7 +57,7 @@ app_express.post('/clicked', (req,res) => {
 	var interval = req.body.interval;
 	var trialLength = req.body.trialLength;
 
-	records.push({time:getTimeValue(), state:'math'})
+	records.push({time:getTimeValue(), state:req.body.state})
 	var i = 0;
 
 	timer = setInterval(function(){
@@ -64,15 +65,15 @@ app_express.post('/clicked', (req,res) => {
 			records.push({time: getTimeValue(), state:req.body.state});
 		} else {
 			records.push({time: getTimeValue(), state:'end'});
+      console.log(records);
 			writeCSV();
 			clearInterval(timer);
 		}
 		i++;
 	}, interval * 1000);
-	console.log(records)
 
 
-	console.log(req.body.interval);
+	//console.log(req.body.interval);
 });
 
 
